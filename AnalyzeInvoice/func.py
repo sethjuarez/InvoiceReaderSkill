@@ -12,7 +12,7 @@ modelId = os.environ["ModelId"]
 uri = f"https://{formsRecognizerEndpoint}/formrecognizer/v1.0-preview/custom/models/{modelId}/analyze"
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
+    logging.info('Invoice Skill Request: Python HTTP trigger function processed a request.')
     
     # get request body
     body = req.get_json()
@@ -41,7 +41,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 'data': {
                     'formUrl': url,
                     'invoice': convert(response.json()),
-                    'response': response.json()
+                    'error': ""
                 }
             })
 

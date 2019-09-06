@@ -1,61 +1,78 @@
 import json
+from dateutil import parser
 
 personMap = {
-    "Name": "Name",
-    "Address": "Address",
-    "City": "City",
-    "State": "StateProvince",
-    "Postal Code": "PostalCode",
-    "Country": "Country",
+    "Name": "name",
+    "Address": "address",
+    "City": "city",
+    "State": "stateProvince",
+    "Postal Code": "postalCode",
+    "Country": "country",
 }
 
 companyMap = {
-    "Company": "Name",
-    "Company Address": "Address",
-    "Company City": "City",
-    "Company State": "StateProvince",
-    "Company Postal Code": "PostalCode",
-    "Company Country": "Country",
+    "Company": "name",
+    "Company Address": "address",
+    "Company City": "city",
+    "Company State": "stateProvince",
+    "Company Postal Code": "postalCode",
+    "Company Country": "country",
 }
 
 invoiceMap = {
-    "Invoice No.": "InvoiceId",
-    "Order Date": "OrderDate",
-    "Subtotal": "SubTotal",
-    "Total Discount": "TotalDiscount",
-    "Tax Rate": "TaxRate",
-    "Total Tax": "TotalTax",
-    "Total": "Total",
+    "Invoice No.": "invoiceId",
+    "Order Date": "orderDate",
+    "Subtotal": "subTotal",
+    "Total Discount": "totalDiscount",
+    "Tax Rate": "taxRate",
+    "Total Tax": "totalTax",
+    "Total": "total",
 }
 
 lineItemMap = {
-    "Itm": "ItemId",
-    "Qty": "Quantity",
-    "Description": "Description",
-    "Price": "Price",
-    "Discount": "DiscountTotal",
-    "(Pct)": "Discount",
-    "Tax": "Tax",
-    "LineTotal": "LineTotal",
+    "Itm": "itemId",
+    "Qty": "quantity",
+    "Description": "description",
+    "Price": "price",
+    "Discount": "discountTotal",
+    "(Pct)": "discount",
+    "Tax": "tax",
+    "LineTotal": "lineTotal",
 }
 
-def convert(data):
-    o = {}
+intMap = ["invoiceId", "itemId", "quantity"]
+decimalMap = ["subTotal", "totalDiscount", "taxRate", "totalTax", "total", "price", "discountTotal", "discount", "tax", "lineTotal"]
+dateMap = ["orderDate"]
 
-    # python dictionaries are fun
+def convert(data):
+    # get original data in a more normalized form 
     keyPairs = { items["key"][0]["text"]: items["value"][0]["text"] if len(items["value"]) > 0 else "" 
                  for items in data["pages"][0]["keyValuePairs"] }
 
     tableItems = { col["header"][0]["text"]: [entry[0]["text"] for entry in col["entries"]]
                   for col in data["pages"][0]["tables"][0]["columns"] }
 
-    o = { v: keyPairs[k] for k, v in invoiceMap.items() }
-    o['company'] = { v: keyPairs[k] for k, v in companyMap.items() }
-    o['person'] = { v: keyPairs[k] for k, v in personMap.items() }
+    # convert to invoice structure
+    o = { v: translate(v, keyPairs[k]) for k, v in invoiceMap.items() }
+    o['company'] = { v: translate(v, keyPairs[k]) for k, v in companyMap.items() }
+    o['person'] = { v: translate(v, keyPairs[k]) for k, v in personMap.items() }
 
-    o['keyPairs'] = keyPairs
-    o['tableItems'] = tableItems
+    lineItemCount = min([len(v) for k, v in tableItems.items()])
+    lineItems = [{} for i in range(lineItemCount)]
+    for key in tableItems.keys():
+        for i in range(lineItemCount):
+            lineItems[i][lineItemMap[key]] = translate(lineItemMap[key], tableItems[key][i])
 
+    o['lineItems'] = lineItems
     
-
     return o
+
+def translate(key, value):
+    if key in intMap:
+        return int(value)
+    elif key in decimalMap:
+        return float(value.replace("$", "").replace("%", ""))
+    elif key in dateMap:
+        return parser.parse(value).strftime('%Y-%m-%dT%H:%M:%S')
+    else:
+        return value
