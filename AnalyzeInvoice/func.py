@@ -34,10 +34,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 'Ocp-Apim-Subscription-Key': formsRecognizerKey,
                 'Content-Type': 'application/pdf' })
 
+            logging.info(type(response.json()))
+
             records['values'].append({
                 'recordId': recordId,
                 'data': {
-                    'text': convert(response.json()),
+                    'formUrl': url,
+                    'invoice': convert(response.json()),
                     'response': response.json()
                 }
             })
@@ -47,6 +50,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             records['values'].append({
                 'recordId': recordId,
                 'data': {
+                    'formUrl': url,
+                    'invoice': { },
                     'error': str(error)
                 }
             })
