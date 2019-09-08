@@ -21,40 +21,34 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     records = { 'values': [] }
 
     for record in body["values"]:
-        recordId = record["recordId"]
-        url = record["data"]["formUrl"]
-        token = record["data"]["formSasToken"]
-
         try:
             # get pdf form
-            pdf = requests.get(f"{url}{token}")
+            pdf = requests.get(f'{record["data"]["formUrl"]}{record["data"]["formSasToken"]}')
 
             # make Form Recognizer API request
+            logging.info(f'CogSvc Form Request: {uri}')
             response = requests.post(uri, data=pdf, headers={ 
                 'Ocp-Apim-Subscription-Key': formsRecognizerKey,
                 'Content-Type': 'application/pdf' })
 
-            logging.info(type(response.json()))
-
             records['values'].append({
-                'recordId': recordId,
+                'recordId': record["recordId"],
                 'data': {
-                    'formUrl': url,
+                    'formUrl': record["data"]["formUrl"],
                     'invoice': convert(response.json()),
-                    'error': ""
+                    'error': ''
                 }
             })
-
         except:
             _, error, _ = sys.exc_info()
             records['values'].append({
-                'recordId': recordId,
+                'recordId': record["recordId"],
                 'data': {
-                    'formUrl': url,
+                    'formUrl': record["data"]["formUrl"],
                     'invoice': { },
                     'error': str(error)
                 }
             })
 
     return func.HttpResponse(body=json.dumps(records), 
-                             headers={ 'Content-Type': 'application/json' })
+                             headers={ 'Content-Type': 'application/json', "Access-Control-Allow-Origin": "*" })
