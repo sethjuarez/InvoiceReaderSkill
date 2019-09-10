@@ -8,6 +8,7 @@ personMap = {
     "State": "stateProvince",
     "Postal Code": "postalCode",
     "Country": "country",
+    "Email": "email"
 }
 
 companyMap = {

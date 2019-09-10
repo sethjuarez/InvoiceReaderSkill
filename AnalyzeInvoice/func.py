@@ -36,6 +36,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 'data': {
                     'formUrl': record["data"]["formUrl"],
                     'invoice': convert(response.json()),
+                    #'response': response.json(),
                     'error': ''
                 }
             })
