@@ -4,7 +4,7 @@ import json
 import logging
 import requests
 import azure.functions as func
-from lib.helpers import convert
+from . import helpers
 
 formsRecognizerKey = os.environ["FormsRecognizerKey"]
 formsRecognizerEndpoint = os.environ["FormsRecognizerEndpoint"]
@@ -35,8 +35,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 'recordId': record["recordId"],
                 'data': {
                     'formUrl': record["data"]["formUrl"],
-                    'invoice': convert(response.json()),
-                    #'response': response.json(),
+                    'invoice': helpers.convert(response.json()),
                     'error': ''
                 }
             })
