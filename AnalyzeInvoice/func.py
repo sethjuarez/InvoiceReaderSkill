@@ -31,22 +31,48 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 'Ocp-Apim-Subscription-Key': formsRecognizerKey,
                 'Content-Type': 'application/pdf' })
 
-            records['values'].append({
-                'recordId': record["recordId"],
-                'data': {
-                    'formUrl': record["data"]["formUrl"],
-                    'invoice': helpers.convert(response.json()),
-                    'error': ''
-                }
-            })
-        except:
-            _, error, _ = sys.exc_info()
+            cog_response = response.json()
+            logging.info(f'CogSvc Form Response: {cog_response}')
+
+            # Error from Cognitive Services?
+            if 'error' in cog_response:
+                code = cog_response['error']['code']
+                message = cog_response['error']['message']
+                logging.error(f'CogSvc Error {code}: {message}')
+                records['values'].append({
+                    'recordId': record["recordId"],
+                    'data': {
+                        'formUrl': record["data"]["formUrl"],
+                        'invoice': {},
+                        'error': {
+                            'code': code,
+                            'message': message,
+                            'type': 'Cognitive Service Error'
+                        }
+                    }
+                })
+            else:
+                records['values'].append({
+                    'recordId': record["recordId"],
+                    'data': {
+                        'formUrl': record["data"]["formUrl"],
+                        'invoice': helpers.convert(cog_response),
+                        'error': {}
+                    }
+                })
+        except Exception as error:
+            logging.exception('Python Error')
+            
             records['values'].append({
                 'recordId': record["recordId"],
                 'data': {
                     'formUrl': record["data"]["formUrl"],
                     'invoice': { },
-                    'error': str(error)
+                    'error': { 
+                        'code': '500',
+                        'message': f'{type(error).__name__}: {str(error)}',
+                        'type': 'Python Error'
+                    }
                 }
             })
 
